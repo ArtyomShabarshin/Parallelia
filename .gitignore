@@ -8,3 +8,9 @@ bin-release/
 .settings/
 .project
 Parallelia.opensdf
+Samples/Debug/cl.command.1.tlog
+Samples/Debug/CL.read.1.tlog
+Samples/Debug/*
+Debug/*
+Parallelia.sdf
+Parallelia.sdf

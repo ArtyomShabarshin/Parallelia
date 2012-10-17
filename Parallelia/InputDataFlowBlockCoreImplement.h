@@ -6,6 +6,7 @@
 #include "IInputDataFlowBlock.h"
 #include "IOutputDataFlowBlock.h"
 #include "ReadyEventReceiver.h"
+#include "DataFlowBlockCompletion.h"
 
 #include "DataFlowBlockState.h"
 #include "DataFlowBlockOptions.h"
@@ -42,7 +43,7 @@ namespace Parallelia
 
 			//IDataFlowBlock interface
 			virtual void DoComplete();
-			virtual Concurrency::task_group& DoCompletion();
+			virtual IDataFlowBlockCompletion& DoCompletion();
 
 			//IInputDataFlowBlock interface
 			virtual void DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<T> >& outputBlock);
@@ -50,10 +51,11 @@ namespace Parallelia
 			//IOutputDataFlowBlock<T> interface
 			virtual DataFlowPostItemStatus DoTryPostItem(T item);
 			virtual void DoRegisterReadyEventReceiver(std::shared_ptr<ParalleliaCore::ReadyEventReceiver > readyEventReveicer){}
-			virtual size_t DoCapacityFactor() const { return -1; } 
+			virtual size_t DoCapacityFactor() { return -1; } 
 
 			void Init();
 			void WakeUpTCE();
+			void CompletionWait();
 
 		private:
 			Concurrency::concurrent_queue<T> m_queue;
@@ -62,12 +64,13 @@ namespace Parallelia
 			Concurrency::task_group m_taskgroup;
 			DataFlowBlockState m_blockstate;
 			DataflowBlockOptions m_options;
-			size_t m_count;
+			volatile size_t m_count;
 			int m_numConsumers;
 			int m_numStopperConsumers;
 			std::shared_ptr<ReadyEventReceiver> m_eventReceiver;
 			long m_processedItems;
 			long m_processingItems;
+			DataFlowBlockCompletion* m_completion;
 #ifdef DEBUG_PDF_TRACE
 			//debug
 			Parallelia::Utils::DebugInfo m_debug;
@@ -83,6 +86,7 @@ namespace Parallelia
 																												 , m_numStopperConsumers(0)
 																												 , m_processedItems(0L)
 																												 , m_processingItems(0L)
+																												 , m_completion(new DataFlowBlockCompletion(std::bind(&InputDataFlowBlockCoreImplement<T>::CompletionWait, this)))
 		{ Init(); }
 
 		template<typename T> 
@@ -90,7 +94,7 @@ namespace Parallelia
 		{
 			try
 			{
-				m_taskgroup.wait();
+				m_completion->Wait();
 			}
 			catch(...)  //any exceptions will be ignored
 			{}
@@ -229,9 +233,9 @@ namespace Parallelia
 
 
 		template<typename T> 
-		Concurrency::task_group& InputDataFlowBlockCoreImplement<T>::DoCompletion()
+		IDataFlowBlockCompletion& InputDataFlowBlockCoreImplement<T>::DoCompletion()
 		{
-			return m_taskgroup; 
+			return *(IDataFlowBlockCompletion*)m_completion; 
 		}
 
 		//add item to consumer queue
@@ -293,6 +297,12 @@ namespace Parallelia
 			m_debug.StartDebug(); 
 #endif
 			;
+		}
+
+		template<typename T> 
+		void InputDataFlowBlockCoreImplement<T>::CompletionWait()
+		{
+			m_taskgroup.wait();
 		}
 
 

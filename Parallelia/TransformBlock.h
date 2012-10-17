@@ -9,7 +9,8 @@
 #include "ppltasks.h"
 
 #include "BufferBlock.h"
-#include "OutputDataFlowTransformBlockCoreImplement.h"
+#include "OutputDataFlowBlockCore.h"
+#include "DataFlowBlockCompletion.h"
 
 
 namespace Parallelia
@@ -25,43 +26,47 @@ namespace Parallelia
 		explicit TransformBlock(F func);	
 		virtual ~TransformBlock();
 		bool Post(I item);
-		size_t InputCount() { return m_input->Count(); }
-		size_t OutputCount() { return m_output->Count(); }
+		size_t InputCount() { return m_input.Count(); }
+		size_t OutputCount() { return m_output.Count(); }
 		void StartDebug();
+		long ProcessedItems() const { return m_input.ProcessedItems(); }
+		long ProcessingItems() const { return m_input.ProcessingItems(); }
 	private:
 		TransformBlock(const TransformBlock&);
 		TransformBlock& operator=(const TransformBlock&);
 		//IDataFlowBlock
 		virtual void DoComplete();
-		virtual Concurrency::task_group& DoCompletion();
+		virtual IDataFlowBlockCompletion& DoCompletion();
 
 		//IOutputDataFlowBlock
 		virtual DataFlowPostItemStatus DoTryPostItem(I item);
-		virtual void DoRegisterReadyEventReceiver(std::shared_ptr<ParalleliaCore::ReadyEventReceiver > readyEventReveicer) { m_input->RegisterReadyEventReceiver(readyEventReveicer); }
-		virtual size_t DoCapacityFactor() const { return m_input->CapacityFactor(); }
+		virtual void DoRegisterReadyEventReceiver(std::shared_ptr<ParalleliaCore::ReadyEventReceiver > readyEventReveicer) { m_input.RegisterReadyEventReceiver(readyEventReveicer); }
+		virtual size_t DoCapacityFactor(){ return m_input.CapacityFactor(); }
 
 		//IInputDataFlowBlock
 		virtual void DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<O> >& outputBlock);
 
-		void Transform(I item);
+		void CompletionWait();
 	private:
-		std::shared_ptr<ParalleliaCore::OutputDataFlowTransformBlockCoreImplement<I,O> > m_input;
-		std::shared_ptr<BufferBlock<O> > m_output;
+		ParalleliaCore::OutputDataFlowBlockCore<I,O> m_input;
+		BufferBlock<O> m_output;
 		Concurrency::concurrent_vector<std::shared_ptr<IOutputDataFlowBlock<O> > > m_linktovector;
+		IDataFlowBlockCompletion* m_completion;
 	};
 
 
 	template<typename I, typename O> 
-	TransformBlock<I,O>::TransformBlock(F func) :  m_input(new ParalleliaCore::OutputDataFlowTransformBlockCoreImplement<I,O>(func, DataflowBlockOptions::Default()))
-												 , m_output(new Parallelia::BufferBlock<O>(DataflowBlockOptions::Default()))
-	{ m_input->SetLink(m_output); }
+	TransformBlock<I,O>::TransformBlock(F func) :  m_input(func, DataflowBlockOptions::Default())
+												 , m_output(DataflowBlockOptions::Default())
+												 , m_completion(new ParalleliaCore::DataFlowBlockCompletion(std::bind(&TransformBlock<I,O>::CompletionWait, this)))
+	{ m_input.SetLink(&m_output); }
 
 
 	template<typename I, typename O> 
-	TransformBlock<I,O>::TransformBlock(F func, const DataflowBlockOptions& options) : m_inputcoreimpl(new ParalleliaCore::DataFlowBlockCoreImplement<I>(func, options))
-																					 , m_outputcoreimpl(new ParalleliaCore::DataFlowBlockCoreImplement<O>(func, options))
-																					 , m_func(func)
-	{}
+	TransformBlock<I,O>::TransformBlock(F func, const DataflowBlockOptions& options) : m_input(func, options)
+																					 , m_output(options)
+																					 , m_completion(new ParalleliaCore::DataFlowBlockCompletion(std::bind(&TransformBlock<I,O>::CompletionWait, this)))
+	{ m_input.SetLink(&m_output); }
 
 	template<typename I, typename O> 
 	TransformBlock<I,O>::~TransformBlock()
@@ -70,15 +75,15 @@ namespace Parallelia
 	template<typename I, typename O> 
 	void TransformBlock<I,O>::DoComplete()
 	{
-		 m_input->Complete(); 
-		 m_output->Complete();
+		 m_input.Complete(); 
+		 m_output.Complete();
 	}
 
 	//we are sure that block is completed if all source items have been processed (stored in output queue)
 	template<typename I, typename O> 
-	Concurrency::task_group& TransformBlock<I,O>::DoCompletion()
+	IDataFlowBlockCompletion& TransformBlock<I,O>::DoCompletion()
 	{
-		return m_input->Completion();
+		return *m_completion;
 	}
 
 	
@@ -88,33 +93,32 @@ namespace Parallelia
 		return DataFlowPostItemStatus::Accepted == TryPostItem(item);
 	}
 
-	//process item from input to output queue
-	template<typename I, typename O> 
-	void TransformBlock<I,O>::Transform(I item)
-	{
-		O result = m_func(item);
-		m_output->TryPostItem(result);
-	}
-
-
 	//put item into input queue
 	template<typename I, typename O> 
 	DataFlowPostItemStatus TransformBlock<I,O>::DoTryPostItem(I item)
 	{
-		return m_input->TryPostItem(item);
+		return m_input.TryPostItem(item);
 	}
 
 	template<typename I, typename O> 
 	void TransformBlock<I,O>::DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<O> >& outputBlock)
 	{
-		m_output->LinkTo(outputBlock);
+		m_output.LinkTo(outputBlock);
 	}
 
 	template<typename I, typename O> 
 	void TransformBlock<I,O>::StartDebug()
 	{
-		m_input->StartDebug();
-		m_output->StartDebug();
+		m_input.StartDebug();
+		m_output.StartDebug();
+	}
+
+	template<typename I, typename O> 
+	void TransformBlock<I,O>::CompletionWait()
+	{
+		m_input.Completion().Wait();
+		m_output.Complete();
+		m_output.Completion().Wait();
 	}
 
 }

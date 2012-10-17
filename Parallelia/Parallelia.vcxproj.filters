@@ -16,6 +16,9 @@
     <Filter Include="Header Files\utils">
       <UniqueIdentifier>{a1f6cb5d-0059-4510-a52d-f47ee84c68ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{3208bc8e-37c4-4475-9106-9bd4ce12f725}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -51,12 +54,6 @@
     <ClInclude Include="IOutputDataFlowBlock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OutputDataFlowBlockCoreImplement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OutputDataFlowTransformBlockCoreImplement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ReadyEventReceiver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -65,6 +62,24 @@
     </ClInclude>
     <ClInclude Include="DebugInfo.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="PerfCounter.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Int2Type.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="IsVoid.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputDataFlowBlockCore.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="IDataFlowBlockCompletion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataFlowBlockCompletion.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

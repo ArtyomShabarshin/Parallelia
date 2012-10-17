@@ -1,6 +1,7 @@
 #ifndef IDATAFLOWBLOCK
 #define IDATAFLOWBLOCK
 
+#include "IDataFlowBlockCompletion.h"
 #include "ppl.h"
 
 
@@ -13,7 +14,7 @@ namespace Parallelia
 	public:
 		virtual ~IDataFlowBlock(){}
 		void Complete() { DoComplete(); }
-		Concurrency::task_group& Completion() { return DoCompletion(); }
+		IDataFlowBlockCompletion& Completion() { return DoCompletion(); }
 	protected:
 		IDataFlowBlock(){}
 
@@ -23,7 +24,7 @@ namespace Parallelia
 		IDataFlowBlock& operator=(const IDataFlowBlock&);
 
 		virtual void DoComplete() = 0;
-		virtual Concurrency::task_group& DoCompletion() = 0;
+		virtual IDataFlowBlockCompletion& DoCompletion() = 0;
 
 
 		

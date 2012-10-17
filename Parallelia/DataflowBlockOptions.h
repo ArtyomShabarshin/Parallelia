@@ -13,6 +13,10 @@ namespace Parallelia
 		//Gets/Sets the capacity of the queue
 		size_t Capacity;
 
+		DataflowBlockOptions() : MaxDegreeOfParallelism(1)
+								,Capacity(-1)
+		{}
+
 		static DataflowBlockOptions Default()
 		{
 			DataflowBlockOptions options;

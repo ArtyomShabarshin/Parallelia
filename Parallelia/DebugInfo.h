@@ -3,9 +3,8 @@
 
 #include "concurrent_vector.h"
 #include <string>
-#include <ctime>
 
-#include "Winbase.h"
+#include "PerfCounter.h"
 
 namespace Parallelia
 {
@@ -36,8 +35,7 @@ namespace Parallelia
 
 		private:
 			Concurrency::concurrent_vector<DebugInfoItem> m_store;
-			double m_pcFreq;
-			__int64 m_counterStart;
+			PerfCounter m_counter;
 		};
 
 		//thread-safe store item to store
@@ -51,19 +49,12 @@ namespace Parallelia
 
 		double DebugInfo::GetCounter()
 		{
-			LARGE_INTEGER li;
-			QueryPerformanceCounter(&li);
-			double res =  double(li.QuadPart-m_counterStart) / m_pcFreq;
-			return res;
+			return m_counter.GetCounter();
 		}
 
 		void DebugInfo::StartDebug()
 		{
-			LARGE_INTEGER li;
-			QueryPerformanceFrequency(&li);
-			m_pcFreq= double(li.QuadPart)/1000.0;
-			QueryPerformanceCounter(&li);
-			m_counterStart = li.QuadPart;
+			m_counter.Start();
 		}
 
 	}
