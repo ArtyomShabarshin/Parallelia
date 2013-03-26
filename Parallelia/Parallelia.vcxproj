@@ -51,11 +51,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -80,9 +84,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActionBlock.h" />
+    <ClInclude Include="BroadcastBufferBlock.h" />
+    <ClInclude Include="BroadcastItemProcessor.h" />
     <ClInclude Include="BufferBlock.h" />
+    <ClInclude Include="AutomaticGuard.h" />
     <ClInclude Include="DataFlowBlockCompletion.h" />
-    <ClInclude Include="DataFlowBlockCoreImplement.h" />
     <ClInclude Include="DataflowBlockOptions.h" />
     <ClInclude Include="DataFlowBlockState.h" />
     <ClInclude Include="DataFlowPostItemStatus.h" />
@@ -90,14 +96,23 @@
     <ClInclude Include="IDataFlowBlock.h" />
     <ClInclude Include="IDataFlowBlockCompletion.h" />
     <ClInclude Include="IInputDataFlowBlock.h" />
-    <ClInclude Include="InputDataFlowBlockCoreImplement.h" />
+    <ClInclude Include="InputDataFlowBlockCore.h" />
+    <ClInclude Include="InputDataFlowBlockCoreDebugProxy.h" />
     <ClInclude Include="Int2Type.h" />
     <ClInclude Include="IOutputDataFlowBlock.h" />
     <ClInclude Include="IsVoid.h" />
+    <ClInclude Include="ItemProcessor.h" />
+    <ClInclude Include="NullBlock.h" />
     <ClInclude Include="OutputDataFlowBlockCore.h" />
+    <ClInclude Include="OutputDataFlowBlockCoreDebugProxy.h" />
     <ClInclude Include="PerfCounter.h" />
     <ClInclude Include="ReadyEventReceiver.h" />
+    <ClInclude Include="SingleItemProcessor.h" />
     <ClInclude Include="TransformBlock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

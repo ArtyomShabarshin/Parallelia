@@ -5,22 +5,31 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Parallelia", "Parallelia\Pa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Samples", "Samples\Samples.vcxproj", "{26158938-D44E-44C6-B899-0AF83794A4F1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{34A3F1FE-28E0-4C83-91B4-508CA832A92B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{26158938-D44E-44C6-B899-0AF83794A4F1}.Debug|Win32.ActiveCfg = Debug|Win32
-		{26158938-D44E-44C6-B899-0AF83794A4F1}.Debug|Win32.Build.0 = Debug|Win32
-		{26158938-D44E-44C6-B899-0AF83794A4F1}.Release|Win32.ActiveCfg = Release|Win32
-		{26158938-D44E-44C6-B899-0AF83794A4F1}.Release|Win32.Build.0 = Release|Win32
 		{5287BAD3-BB26-4C2C-83DE-CD095F40DC9A}.Debug|Win32.ActiveCfg = Debug|Win32
 		{5287BAD3-BB26-4C2C-83DE-CD095F40DC9A}.Debug|Win32.Build.0 = Debug|Win32
 		{5287BAD3-BB26-4C2C-83DE-CD095F40DC9A}.Release|Win32.ActiveCfg = Release|Win32
 		{5287BAD3-BB26-4C2C-83DE-CD095F40DC9A}.Release|Win32.Build.0 = Release|Win32
+		{26158938-D44E-44C6-B899-0AF83794A4F1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{26158938-D44E-44C6-B899-0AF83794A4F1}.Debug|Win32.Build.0 = Debug|Win32
+		{26158938-D44E-44C6-B899-0AF83794A4F1}.Release|Win32.ActiveCfg = Release|Win32
+		{26158938-D44E-44C6-B899-0AF83794A4F1}.Release|Win32.Build.0 = Release|Win32
+		{34A3F1FE-28E0-4C83-91B4-508CA832A92B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{34A3F1FE-28E0-4C83-91B4-508CA832A92B}.Debug|Win32.Build.0 = Debug|Win32
+		{34A3F1FE-28E0-4C83-91B4-508CA832A92B}.Release|Win32.ActiveCfg = Release|Win32
+		{34A3F1FE-28E0-4C83-91B4-508CA832A92B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

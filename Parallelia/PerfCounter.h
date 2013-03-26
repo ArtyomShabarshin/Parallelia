@@ -1,6 +1,7 @@
 #ifndef PERFCOUNTER
 #define PERFCOUNTER
 
+#include<windows.h>
 #include "Winbase.h"
 
 namespace Parallelia
@@ -30,7 +31,7 @@ namespace Parallelia
 				LARGE_INTEGER li;
 				QueryPerformanceCounter(&li);
 				double res =  double(li.QuadPart-m_counterStart) / m_pcFreq;
-				return res;
+				return (float)res;
 			}
 
 		private:

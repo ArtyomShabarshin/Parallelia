@@ -9,10 +9,10 @@ namespace Parallelia
 
 	namespace ParalleliaCore
 	{
-
+		template<typename T> 
 		class DataFlowBlockCompletion : public IDataFlowBlockCompletion
 		{
-			typedef std::function<void()> F;
+			typedef std::function<T()> F;
 		public:
 			DataFlowBlockCompletion(F func) : m_func(func)
 			{}
@@ -30,7 +30,8 @@ namespace Parallelia
 			F m_func;
 		};
 
-		void DataFlowBlockCompletion::DoWait()
+		template<typename T> 
+		void DataFlowBlockCompletion<T>::DoWait()
 		{
 			m_func();
 		}

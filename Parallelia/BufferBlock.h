@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "InputDataFlowBlockCoreImplement.h"
+#include "InputDataFlowBlockCore.h"
 
 
 namespace Parallelia
@@ -13,6 +13,7 @@ namespace Parallelia
 	template<typename T> 
 	class BufferBlock : public IInputDataFlowBlock<T>, public IOutputDataFlowBlock<T>, public IDataFlowBlock
 	{
+		typedef IOutputDataFlowBlock<T>*  Linktype;
 	public:
 		explicit BufferBlock(const DataflowBlockOptions& options);	
 		explicit BufferBlock();	
@@ -23,6 +24,7 @@ namespace Parallelia
 		long ProcessingItems() const { return m_coreimpl.ProcessingItems(); }
 
 		void StartDebug() { m_coreimpl.StartDebug(); }
+
 	private:
 		//no copy
 		BufferBlock(const BufferBlock&);
@@ -33,7 +35,7 @@ namespace Parallelia
 		virtual IDataFlowBlockCompletion& DoCompletion();
 
 		//IInputDataFlowBlock interface
-		virtual void DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<T> >& outputBlock);
+		virtual void DoLinkTo(Linktype outputBlock, IInputDataFlowBlock<T>::Predicate predicate);
 
 		//IOutputDataFlowBlock interface
 		virtual DataFlowPostItemStatus DoTryPostItem(T item);
@@ -41,7 +43,7 @@ namespace Parallelia
 		virtual size_t  DoCapacityFactor(){ return -1; }
 
 	private:
-		ParalleliaCore::InputDataFlowBlockCoreImplement<T> m_coreimpl;
+		ParalleliaCore::InputDataFlowBlockCore<T> m_coreimpl;
 	};
 
 	template<typename T> 
@@ -50,12 +52,12 @@ namespace Parallelia
 
 
 	template<typename T> 
-	BufferBlock<T>::BufferBlock():  m_coreimpl(DataflowBlockOptions::Default())
+	BufferBlock<T>::BufferBlock():  m_coreimpl(DataflowBlockOptions::Default(), false)//isbroadcast = false
 	{}
 
 
 	template<typename T> 
-	BufferBlock<T>::BufferBlock(const DataflowBlockOptions& options) : m_coreimpl(options)
+	BufferBlock<T>::BufferBlock(const DataflowBlockOptions& options) : m_coreimpl(options, false)//isbroadcast = false
 	{}
 
 
@@ -67,10 +69,10 @@ namespace Parallelia
 
 
 	template<typename T> 
-	void BufferBlock<T>::DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<T> >& outputBlock)
+	void BufferBlock<T>::DoLinkTo(Linktype outputBlock, IInputDataFlowBlock<T>::Predicate predicate)
 	{
 	
-		m_coreimpl.LinkTo(outputBlock);
+		m_coreimpl.LinkTo(outputBlock, predicate);
 
 	}
 

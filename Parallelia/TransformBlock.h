@@ -21,6 +21,7 @@ namespace Parallelia
 	class TransformBlock : public IDataFlowBlock, public IInputDataFlowBlock<O>, public IOutputDataFlowBlock<I>
 	{
 		typedef std::function<O(I)> F;
+		typedef IOutputDataFlowBlock<O>*  Linktype;
 	public:
 		explicit TransformBlock(F func, const DataflowBlockOptions& options);	
 		explicit TransformBlock(F func);	
@@ -44,13 +45,13 @@ namespace Parallelia
 		virtual size_t DoCapacityFactor(){ return m_input.CapacityFactor(); }
 
 		//IInputDataFlowBlock
-		virtual void DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<O> >& outputBlock);
+		virtual void DoLinkTo(Linktype outputBlock, IInputDataFlowBlock<O>::Predicate predicate);
 
 		void CompletionWait();
 	private:
 		ParalleliaCore::OutputDataFlowBlockCore<I,O> m_input;
 		BufferBlock<O> m_output;
-		Concurrency::concurrent_vector<std::shared_ptr<IOutputDataFlowBlock<O> > > m_linktovector;
+		Concurrency::concurrent_vector<Linktype> m_linktovector;
 		IDataFlowBlockCompletion* m_completion;
 	};
 
@@ -58,25 +59,28 @@ namespace Parallelia
 	template<typename I, typename O> 
 	TransformBlock<I,O>::TransformBlock(F func) :  m_input(func, DataflowBlockOptions::Default())
 												 , m_output(DataflowBlockOptions::Default())
-												 , m_completion(new ParalleliaCore::DataFlowBlockCompletion(std::bind(&TransformBlock<I,O>::CompletionWait, this)))
+												, m_completion(new ParalleliaCore::DataFlowBlockCompletion<void>([=]() { CompletionWait(); } ))
 	{ m_input.SetLink(&m_output); }
 
 
 	template<typename I, typename O> 
 	TransformBlock<I,O>::TransformBlock(F func, const DataflowBlockOptions& options) : m_input(func, options)
 																					 , m_output(options)
-																					 , m_completion(new ParalleliaCore::DataFlowBlockCompletion(std::bind(&TransformBlock<I,O>::CompletionWait, this)))
+																					// , m_completion(new ParalleliaCore::DataFlowBlockCompletion<void>(std::bind<void>(&TransformBlock<I,O>::CompletionWait, this)))
+																					, m_completion(new ParalleliaCore::DataFlowBlockCompletion<void>([=]() { CompletionWait(); } ))
 	{ m_input.SetLink(&m_output); }
 
 	template<typename I, typename O> 
 	TransformBlock<I,O>::~TransformBlock()
-	{}
+	{
+		delete m_completion;
+	}
 
 	template<typename I, typename O> 
 	void TransformBlock<I,O>::DoComplete()
 	{
 		 m_input.Complete(); 
-		 m_output.Complete();
+		// m_output.Complete();  //what will happend if input doesn't complete all items
 	}
 
 	//we are sure that block is completed if all source items have been processed (stored in output queue)
@@ -101,9 +105,9 @@ namespace Parallelia
 	}
 
 	template<typename I, typename O> 
-	void TransformBlock<I,O>::DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<O> >& outputBlock)
+	void TransformBlock<I,O>::DoLinkTo(Linktype outputBlock, IInputDataFlowBlock<O>::Predicate predicate)
 	{
-		m_output.LinkTo(outputBlock);
+		m_output.LinkTo(outputBlock, predicate);
 	}
 
 	template<typename I, typename O> 
@@ -119,6 +123,7 @@ namespace Parallelia
 		m_input.Completion().Wait();
 		m_output.Complete();
 		m_output.Completion().Wait();
+
 	}
 
 }

@@ -30,9 +30,6 @@
     <ClInclude Include="BufferBlock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DataFlowBlockCoreImplement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DataflowBlockOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -46,9 +43,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IInputDataFlowBlock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputDataFlowBlockCoreImplement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IOutputDataFlowBlock.h">
@@ -81,5 +75,36 @@
     <ClInclude Include="DataFlowBlockCompletion.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
+    <ClInclude Include="InputDataFlowBlockCore.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputDataFlowBlockCoreDebugProxy.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="InputDataFlowBlockCoreDebugProxy.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomaticGuard.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="NullBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BroadcastBufferBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemProcessor.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleItemProcessor.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="BroadcastItemProcessor.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
 </Project>

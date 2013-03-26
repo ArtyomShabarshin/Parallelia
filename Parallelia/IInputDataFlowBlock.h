@@ -10,9 +10,13 @@ namespace Parallelia
 	template<typename T>
 	class IInputDataFlowBlock
 	{
+		typedef IOutputDataFlowBlock<T>*  Linktype;
 	public:
+		typedef std::function<bool(T)> Predicate;
+
 		virtual ~IInputDataFlowBlock(){}
-		void LinkTo(std::shared_ptr<IOutputDataFlowBlock<T> >& outputBlock) { DoLinkTo(outputBlock);}
+		void LinkTo(Linktype outputBlock) { DoLinkTo(outputBlock, [=](T item) { return true; });}
+		void LinkTo(Linktype outputBlock, Predicate predicate) { DoLinkTo(outputBlock, predicate);}
 	protected:
 		IInputDataFlowBlock(){}
 	private:
@@ -20,7 +24,7 @@ namespace Parallelia
 		IInputDataFlowBlock(const IInputDataFlowBlock&);
 		IInputDataFlowBlock& operator=(const IInputDataFlowBlock&);
 
-		virtual void DoLinkTo(std::shared_ptr<IOutputDataFlowBlock<T> >& outputBlock) = 0;
+		virtual void DoLinkTo(Linktype outputBlock, Predicate predicate) = 0;
 	};
 
 

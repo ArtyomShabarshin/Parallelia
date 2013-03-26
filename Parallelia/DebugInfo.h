@@ -10,15 +10,13 @@ namespace Parallelia
 {
 	namespace Utils
 	{
-
+		template<class T=std::string>
 		class DebugInfo
 		{
-			typedef std::string ItemDataType;
-
 			struct DebugInfoItem
 			{
 				double dt;
-				ItemDataType info;
+				T info;
 			};
 		public:
 			DebugInfo()
@@ -29,7 +27,7 @@ namespace Parallelia
 			virtual ~DebugInfo()
 			{}
 
-			void Add(const ItemDataType& info);
+			void Add(const T& info);
 			double GetCounter();
 			void StartDebug();
 
@@ -39,7 +37,8 @@ namespace Parallelia
 		};
 
 		//thread-safe store item to store
-		void DebugInfo::Add(const ItemDataType& info)
+		template<class T>
+		void DebugInfo<T>::Add(const T& info)
 		{
 			DebugInfoItem item;
 			item.dt = GetCounter();
@@ -47,12 +46,14 @@ namespace Parallelia
 			m_store.push_back(item);
 		}
 
-		double DebugInfo::GetCounter()
+		template<class T>
+		double DebugInfo<T>::GetCounter()
 		{
 			return m_counter.GetCounter();
 		}
 
-		void DebugInfo::StartDebug()
+		template<class T>
+		void DebugInfo<T>::StartDebug()
 		{
 			m_counter.Start();
 		}

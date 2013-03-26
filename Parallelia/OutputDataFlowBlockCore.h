@@ -7,7 +7,7 @@
 
 #include "IDataFlowBlock.h"
 #include "IOutputDataFlowBlock.h"
-#include "DebugInfo.h"
+#include "OutputDataFlowBlockCoreDebugProxy.h"
 
 #include "DataFlowBlockState.h"
 #include "DataFlowBlockOptions.h"
@@ -79,10 +79,8 @@ namespace Parallelia
 			IOutputDataFlowBlock<O>* m_link;//we don't have to delete this pointer
 			IDataFlowBlockCompletion* m_completion;
 
-#ifdef DEBUG_PDF_TRACE
-			//debug
-			Parallelia::Utils::DebugInfo m_debug;
-#endif
+			Parallelia::Utils::OutputDataFlowBlockCoreDebugProxy<I> m_debug;
+
 
 		};
 
@@ -94,18 +92,23 @@ namespace Parallelia
 																											, m_lastpoststatus(Accepted)
 																											, m_processedItems(0L)
 																											, m_processingItems(0L)
-																											, m_completion(new DataFlowBlockCompletion(std::bind(&OutputDataFlowBlockCore<I,O>::CompletionWait, this)))
+																											//, m_completion(new DataFlowBlockCompletion<void>(std::bind(&OutputDataFlowBlockCore<I,O>::CompletionWait, this)))
+																											, m_completion(new DataFlowBlockCompletion<void>([=](){ this->CompletionWait(); }  ))
+																											, m_link(0)
 		{ Init(); }
 
 		template<typename I, typename O> 
 		OutputDataFlowBlockCore<I,O>::~OutputDataFlowBlockCore()
 		{
+			_ASSERT(0 != m_completion);
 			try
 			{
+				this->Complete();
 				m_completion->Wait();
 			}
 			catch(...)  //any exceptions will be ignored
 			{}
+			delete m_completion;
 		}
 
 		//on init we start tasks by number of consumers (default MaxDegreeOfParallelism)
@@ -122,29 +125,26 @@ namespace Parallelia
 				m_taskgroup.run([&, i]()
 				{
 					int consumerid = i;
-#ifdef DEBUG_PDF_TRACE
-					m_debug.Add(std::string("Start consumer ") + std::to_string(consumerid));
-#endif
+
+					m_debug.StartConsumer(consumerid);
+
 					while(true)
 					{
 						I item;
 						result = m_queue.try_pop(item);
 						if(result)
 						{
-#ifdef DEBUG_PDF_TRACE
-							m_debug.Add(std::string("Start processing item. consumer ") + std::to_string(consumerid));
-#endif
+							m_debug.StartProcessingItem(consumerid, item);
 
 							_InterlockedIncrement(&m_processingItems);
-							//if we had overflow of queue we have to send event that we can rceive a new item
+							//if we had overflow of queue we have to send event that we can receive a new item
 							if(_InterlockedCompareExchangeSizeT(&m_lastpoststatus, DataFlowPostItemStatus::Accepted, DataFlowPostItemStatus::Decline) == DataFlowPostItemStatus::Decline)
 							{
 								if(m_readyEventReceiver.get())
 								{
-#ifdef DEBUG_PDF_TRACE
-									m_debug.Add(std::string("Send ready event to producer. consumer ") + std::to_string(consumerid));
-#endif
+									m_debug.SendReadyEventToProducer(consumerid);
 
+									_ASSERT(0 != m_readyEventReceiver);
 									m_readyEventReceiver->Invoke();
 								}
 	
@@ -156,18 +156,14 @@ namespace Parallelia
 							_InterlockedIncrement(&m_processedItems);
 							_InterlockedDecrement(&m_processingItems);
 
-#ifdef DEBUG_PDF_TRACE
-							m_debug.Add(std::string("Complete processing item. consumer ") + std::to_string(consumerid));
-#endif
+							m_debug.CompleteProcessingItem(consumerid, item);
 						}
 						else
 						{
 							
 							if(DataFlowBlockStateReady != m_blockstate)
 							{
-#ifdef DEBUG_PDF_TRACE
-								m_debug.Add(std::string("Finish consumer ") + std::to_string(consumerid));
-#endif
+								m_debug.FinishConsumer(consumerid);
 								break; //task exit
 							}
 
@@ -188,7 +184,8 @@ namespace Parallelia
 			Concurrency::event* tce;
 			while(m_consumerqueue.try_pop(tce))
 			{
-					tce->set();
+				_ASSERT(0 != tce);
+				tce->set();
 			}
 		}
 
@@ -209,16 +206,13 @@ namespace Parallelia
 			size_t currentCount = _InterlockedCompareExchangeSizeT(&m_count, 0, 0);
 			if(currentCount >= cap && -1 !=  cap)
 			{
-#ifdef DEBUG_PDF_TRACE				
-				m_debug.Add(std::string("decline trypostitem (overflow)"));
-#endif
+				m_debug.DeclineTryPostItem(item);
+
 				result = DataFlowPostItemStatus::Decline;
 			}
 			else
 			{
-#ifdef DEBUG_PDF_TRACE		
-				m_debug.Add(std::string("received item from producer"));
-#endif
+				m_debug.ReceivedItem(item);
 
 				m_queue.push(item);
 				_InterlockedIncrementSizeT(&m_count);
@@ -226,9 +220,9 @@ namespace Parallelia
 				Concurrency::event* tce;
 				if(m_consumerqueue.try_pop(tce))
 				{
-#ifdef DEBUG_PDF_TRACE	
-					m_debug.Add(std::string("try to wake up consumer (consumer wait queue:") + std::to_string(m_consumerqueue.unsafe_size()) + std::string(")"));
-#endif
+					m_debug.TryToWakeupConsumer(m_consumerqueue.unsafe_size());
+
+					_ASSERT(0 != tce);
 					tce->set();
 				}
 			}
@@ -251,28 +245,21 @@ namespace Parallelia
 		template<typename I, typename O> 
 		void OutputDataFlowBlockCore<I,O>::StartDebug()
 		{ 
-#ifdef DEBUG_PDF_TRACE
 			m_debug.StartDebug(); 
-#endif
 		}
 
 		//we have no any avialable items. go to sleep and wait for producer
 		template<typename I, typename O> 
 		void OutputDataFlowBlockCore<I,O>::WaitForProducer(int consumerid)
 		{
-#ifdef DEBUG_PDF_TRACE
-			m_debug.Add(std::string("No data. Go to sleep. consumer ") + std::to_string(consumerid));
-#endif
+			m_debug.GotoSleep(consumerid);
+
 			Concurrency::event* tce = new Concurrency::event();
 			m_consumerqueue.push(tce);
 			size_t result = tce->wait();
 			delete tce;
 
-#ifdef DEBUG_PDF_TRACE
-			m_debug.Add(std::string("Woke up after no data with result ") 
-						+ std::to_string(result)
-						+ std::string(". consumer ") + std::to_string(consumerid));
-#endif
+			m_debug.Wokeup(consumerid, result);
 		}
 
 
@@ -287,18 +274,16 @@ namespace Parallelia
 		void OutputDataFlowBlockCore<I,O>::ProceedItem(Int2Type<0>& p, I& item, int consumerid)
 		{
 			m_func(item);
-#ifdef DEBUG_PDF_TRACE
-			m_debug.Add(std::string("Complete processing item. consumer ") + std::to_string(consumerid));
-#endif
+			m_debug.CompleteProcessingItem(consumerid, item);
 		}
 
 		template<typename I, typename O> 
 		void OutputDataFlowBlockCore<I,O>::ProceedItem(Int2Type<1>& p, I& item, int consumerid)
 		{
+			_ASSERT(0 != m_link);
 			O output = m_func(item);
-#ifdef DEBUG_PDF_TRACE
-			m_debug.Add(std::string("Send item to link consumer ") + std::to_string(consumerid));
-#endif
+
+			m_debug.SendItemToLinkConsumer(consumerid, item);
 			m_link->TryPostItem(output);
 		}
 
